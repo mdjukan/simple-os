@@ -1,10 +1,21 @@
 #include "../../h/kernel/printing.hpp"
 #include "../../h/kernel/MemoryAllocator.hpp"
 
+#include "../../h/kernel/PoolAllocator.hpp"
+
 #define UNUSED(var) (void)var
 
-int main() {
-    void *p1 = MemoryAllocator::instance()->allocate(1);
+int main()
+{
+    MemoryAllocator::instance()->print_map();
+    PoolAllocator pool(MEM_BLOCK_SIZE, 65);
+    MemoryAllocator::instance()->print_map();
+    pool.~PoolAllocator();
+    MemoryAllocator::instance()->print_map();
+
+
+
+/*     void *p1 = MemoryAllocator::instance()->allocate(1);
     void *p2 = MemoryAllocator::instance()->allocate(1);
     void *p3 = MemoryAllocator::instance()->allocate(1);
     void *p4 = MemoryAllocator::instance()->allocate(4);
@@ -27,6 +38,6 @@ int main() {
     UNUSED(p2);
     UNUSED(p3);
     UNUSED(p4);
-
+ */
     return 0;
 }
