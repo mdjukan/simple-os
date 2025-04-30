@@ -1,40 +1,52 @@
 #include "../../h/kernel/Utils.hpp"
-#include "../../h/kernel/MemoryAllocator.hpp"
-#include "../../h/kernel/PoolAllocator.hpp"
+#include "../../h/kernel/__Thread.hpp"
+#include "../../h/kernel/Scheduler.hpp"
 
-#define UNUSED(var) (void)var
+void rec_print(uint64 x) {
+    if (x == 0) {
+        return;
+    }
+
+    uint8 arr[] = {1, 2, 3, 4, 5};
+    uint8 arr_size = 5;
+
+    rec_print(x-1);
+
+    for (uint8 i = 0; i < arr_size; i++) {
+        print_num(arr[i]);
+        print_string(" ");
+    }
+    print_string("\n");
+}
+
+void worker(void *arg)
+{
+    char *msg = (char *)arg;
+    for (int i = 0; i < 10; i++)
+    {
+        print_string(msg);
+        rec_print(3);
+        yield();
+        print_string("returned to ");
+        print_string(msg);
+    }
+}
 
 int main()
 {
-    MemoryAllocator::instance()->print_map();
-    PoolAllocator pool(MEM_BLOCK_SIZE, 65);
-    MemoryAllocator::instance()->print_map();
-    pool.~PoolAllocator();
-    MemoryAllocator::instance()->print_map();
+    __Thread t1(worker, (void *)"thread 1\n");
+    __Thread t2(worker, (void *)"thread 2\n");
+    __Thread t3(worker, (void *)"thread 3\n");
 
-/*  void *p1 = MemoryAllocator::instance()->allocate(1);
-    void *p2 = MemoryAllocator::instance()->allocate(1);
-    void *p3 = MemoryAllocator::instance()->allocate(1);
-    void *p4 = MemoryAllocator::instance()->allocate(4);
+    __Thread main_thread;
+    Scheduler::instance()->running = &main_thread;
 
-    MemoryAllocator::instance()->print_map();
+    while (!t1.done || !t2.done || !t3.done) {
+        yield();
+        print_string("returned to main\n");
+    }
 
-    MemoryAllocator::instance()->free(p2);
-    MemoryAllocator::instance()->print_map();
+    print_string("exiting main\n");
 
-    MemoryAllocator::instance()->free(p3);
-    MemoryAllocator::instance()->print_map();
-
-    MemoryAllocator::instance()->free(p1);
-    MemoryAllocator::instance()->print_map();
-
-    MemoryAllocator::instance()->free(p4);
-    MemoryAllocator::instance()->print_map();
-
-    UNUSED(p1);
-    UNUSED(p2);
-    UNUSED(p3);
-    UNUSED(p4);
- */
     return 0;
 }

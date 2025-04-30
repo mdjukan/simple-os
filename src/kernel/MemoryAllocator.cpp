@@ -68,12 +68,11 @@ void MemoryAllocator::try_join_prev(uint64 block)
     try_join_next(prev);
 }
 
-
-
 void *MemoryAllocator::allocate(uint64 size_in_blocks)
 {
-    if (size_in_blocks==0) {
-        print_string("EMPTY ALLOC\n");\
+    if (size_in_blocks == 0)
+    {
+        print_string("EMPTY ALLOC\n");
         exit();
     }
 
@@ -111,6 +110,17 @@ void *MemoryAllocator::allocate(uint64 size_in_blocks)
     }
 
     return nullptr;
+}
+
+void *MemoryAllocator::allocate_bytes(uint64 size)
+{
+    uint64 size_in_blocks = size / MEM_BLOCK_SIZE;
+    if (size % MEM_BLOCK_SIZE != 0)
+    {
+        size_in_blocks += 1;
+    }
+
+    return allocate(size_in_blocks);
 }
 
 void MemoryAllocator::free(void *p)

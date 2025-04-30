@@ -15,6 +15,7 @@ private:
 
 public:
     void *allocate(uint64 size_in_blocks);
+    void *allocate_bytes(uint64 size);
     void free(void *p);
     void print_map();
     static MemoryAllocator *instance()
