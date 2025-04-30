@@ -1,16 +1,23 @@
 #include "../../lib/hw.h"
 #include "../../h/kernel/MemoryAllocator.hpp"
 #include "../../h/kernel/PoolAllocator.hpp"
-
-//TODO neko bolje mesto za ovaj makro
-#define ROUNDUP(num, denom) (num) % (denom) == 0 ? (num) / (denom) : (num) / (denom) + 1
+#include "../../h/kernel/Utils.hpp"
 
 PoolAllocator::PoolAllocator(uint64 elem_size, uint64 elem_count)
     : elem_size(elem_size), elem_count(elem_count)
 {
-    data = MemoryAllocator::instance()->allocate(ROUNDUP(elem_count * elem_size, MEM_BLOCK_SIZE));
-    free = (bool *)MemoryAllocator::instance()->allocate(ROUNDUP(elem_count * sizeof(bool), MEM_BLOCK_SIZE));
-    // TODO error handeling
+    uint64 data_size = elem_size * elem_count;
+    data = MemoryAllocator::instance()->allocate(div_roundup(data_size, MEM_BLOCK_SIZE));
+    if (data==nullptr) {
+        panic("PoolAllocator constructor");
+    }
+
+    uint64 free_size = sizeof(bool) * elem_count;
+    free = (bool *)MemoryAllocator::instance()->allocate(div_roundup(free_size, MEM_BLOCK_SIZE));
+    if (free==nullptr) {
+        panic("PoolAllocator constructor");
+    }
+
     for (uint64 i = 0; i < elem_count; i++)
     {
         free[i] = true;

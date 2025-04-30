@@ -1,6 +1,5 @@
-#include "../../h/kernel/printing.hpp"
+#include "../../h/kernel/Utils.hpp"
 #include "../../h/kernel/MemoryAllocator.hpp"
-
 #include "../../h/kernel/PoolAllocator.hpp"
 
 #define UNUSED(var) (void)var
@@ -13,9 +12,7 @@ int main()
     pool.~PoolAllocator();
     MemoryAllocator::instance()->print_map();
 
-
-
-/*     void *p1 = MemoryAllocator::instance()->allocate(1);
+/*  void *p1 = MemoryAllocator::instance()->allocate(1);
     void *p2 = MemoryAllocator::instance()->allocate(1);
     void *p3 = MemoryAllocator::instance()->allocate(1);
     void *p4 = MemoryAllocator::instance()->allocate(4);

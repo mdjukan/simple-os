@@ -1,5 +1,6 @@
 #pragma once
 #include "../../lib/console.h"
+#include "../../lib/hw.h"
 
 void print_string(const char *str);
 
@@ -38,3 +39,7 @@ void print_num(NUM x)
 
     print_string(&digits[idx + 1]);
 }
+
+void exit();
+uint64 div_roundup(uint64 x, uint64 y);
+void panic(const char *msg);

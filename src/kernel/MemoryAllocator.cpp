@@ -1,5 +1,5 @@
 #include "../../lib/hw.h"
-#include "../../h/kernel/printing.hpp"
+#include "../../h/kernel/Utils.hpp"
 #include "../../h/kernel/MemoryAllocator.hpp"
 
 MemoryAllocator::MemoryAllocator()
@@ -68,11 +68,7 @@ void MemoryAllocator::try_join_prev(uint64 block)
     try_join_next(prev);
 }
 
-void exit() {
-    uint32 *exit_addr = (uint32*)0x100000;
-    uint32 exit_code = 0x5555;
-    *exit_addr = exit_code;
-}
+
 
 void *MemoryAllocator::allocate(uint64 size_in_blocks)
 {
@@ -96,8 +92,9 @@ void *MemoryAllocator::allocate(uint64 size_in_blocks)
         {
             if ((uint64)map[block] == size_in_blocks)
             {
-                map[block + (map[block] - 1)] *= -1;
-                map[block] *= 1;
+                long size = map[block];
+                map[block + (map[block] - 1)] *= -size;
+                map[block] *= -size;
             }
             else
             {
