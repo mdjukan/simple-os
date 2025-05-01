@@ -3,6 +3,13 @@
 
 class MemoryAllocator
 {
+public:
+    static MemoryAllocator *instance()
+    {
+        static MemoryAllocator allocator;
+        return &allocator;
+    }
+
 private:
     long *map = (long *)HEAP_START_ADDR;
     uint64 BLOCK_COUNT;
@@ -17,10 +24,7 @@ public:
     void *allocate(uint64 size_in_blocks);
     void *allocate_bytes(uint64 size);
     void free(void *p);
+
+    //debug
     void print_map();
-    static MemoryAllocator *instance()
-    {
-        static MemoryAllocator allocator;
-        return &allocator;
-    }
 };

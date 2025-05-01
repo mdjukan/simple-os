@@ -22,11 +22,3 @@ void error(const char *msg) {
     print_string("\n");
     exit();
 }
-
-uint64 div_roundup(uint64 x, uint64 y) {
-    if (x % y) {
-        return x/y + 1;
-    } else {
-        return x/y;
-    }
-}

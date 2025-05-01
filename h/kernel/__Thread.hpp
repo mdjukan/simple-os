@@ -6,7 +6,7 @@
 
 class BadAlloc {};
 
-#define THREAD_COUNT 3
+#define THREAD_COUNT 64
 
 #define SP_ALIGN 16
 #define REG_COUNT 32
@@ -35,8 +35,6 @@ class __Thread {
     }
 
     void operator delete[](void *p) = delete; 
-
-    //new __Thread(...) 
 
     public:
     body_t body;

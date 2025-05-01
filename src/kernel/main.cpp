@@ -3,17 +3,17 @@
 #include "../../h/kernel/Scheduler.hpp"
 #include "../../h/kernel/PoolAllocator.hpp"
 
-void rec_print(uint64 x)
+void rec_print(uint64 x, uint64 idx)
 {
     if (x == 0)
     {
         return;
     }
 
-    uint8 arr[] = {1, 2, 3, 4, 5};
+    uint64 arr[] = {idx, idx, idx, idx, idx};
     uint8 arr_size = 5;
 
-    rec_print(x - 1);
+    rec_print(x - 1, idx);
 
     for (uint8 i = 0; i < arr_size; i++)
     {
@@ -25,14 +25,19 @@ void rec_print(uint64 x)
 
 void worker(void *arg)
 {
-    char *msg = (char *)arg;
+    uint64 idx = (uint64)arg;
     for (int i = 0; i < 10; i++)
     {
-        print_string(msg);
-        rec_print(3);
+        print_string("Thread ");
+        print_num(idx);
+        print_string("\n");
+
+        rec_print(3, idx);
         yield();
-        print_string("returned to ");
-        print_string(msg);
+
+        print_string("Returned to Thread ");
+        print_num(idx);
+        print_string("\n");
     }
 }
 
@@ -40,17 +45,17 @@ int main()
 {
     __Thread::allocator = new PoolAllocator(sizeof(__Thread), THREAD_COUNT);
 
-    __Thread *t1 = __Thread::create(worker, (void *)"thread 1\n");
+    __Thread *t1 = __Thread::create(worker, (void *)1);
     if (t1 == nullptr) {
         error("thread1 alloc failed\n");
     }
 
-    __Thread *t2 = __Thread::create(worker, (void *)"thread 2\n");
+    __Thread *t2 = __Thread::create(worker, (void *)2);
     if (t2 == nullptr) {
         error("thread2 alloc failed\n");
     }
 
-    __Thread *t3 = __Thread::create(worker, (void *)"thread 3\n");
+    __Thread *t3 = __Thread::create(worker, (void *)3);
     if (t3 == nullptr) {
         error("thread3 alloc failed\n");
     }
