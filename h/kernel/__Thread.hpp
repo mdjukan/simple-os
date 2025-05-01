@@ -45,7 +45,7 @@ class __Thread {
         Scheduler::instance()->put(this);
     }
 
-    //~__Thread() {
-        //MemoryAllocator::instance()->free(stack);
-    //}
+    ~__Thread() {
+        MemoryAllocator::instance()->free(stack);
+    }
 };

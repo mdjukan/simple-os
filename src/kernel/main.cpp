@@ -2,17 +2,20 @@
 #include "../../h/kernel/__Thread.hpp"
 #include "../../h/kernel/Scheduler.hpp"
 
-void rec_print(uint64 x) {
-    if (x == 0) {
+void rec_print(uint64 x)
+{
+    if (x == 0)
+    {
         return;
     }
 
     uint8 arr[] = {1, 2, 3, 4, 5};
     uint8 arr_size = 5;
 
-    rec_print(x-1);
+    rec_print(x - 1);
 
-    for (uint8 i = 0; i < arr_size; i++) {
+    for (uint8 i = 0; i < arr_size; i++)
+    {
         print_num(arr[i]);
         print_string(" ");
     }
@@ -41,7 +44,8 @@ int main()
     __Thread main_thread;
     Scheduler::instance()->running = &main_thread;
 
-    while (!t1.done || !t2.done || !t3.done) {
+    while (!t1.done || !t2.done || !t3.done)
+    {
         yield();
         print_string("returned to main\n");
     }
