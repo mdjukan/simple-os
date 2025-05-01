@@ -2,6 +2,11 @@
 #include "MemoryAllocator.hpp"
 #include "../../lib/hw.h"
 #include "Scheduler.hpp"
+#include "PoolAllocator.hpp"
+
+class BadAlloc {};
+
+#define THREAD_COUNT 3
 
 #define SP_ALIGN 16
 #define REG_COUNT 32
@@ -16,6 +21,23 @@ extern "C" void yield();
 void thread_wrapper(__Thread *thread);
 
 class __Thread {
+    public:
+    void *operator new(size_t size) {
+        void *p = allocator->get();
+
+        return p;
+    }
+
+    void *operator new[](size_t size) = delete;
+
+    void operator delete(void *p) noexcept {
+        allocator->release(p);
+    }
+
+    void operator delete[](void *p) = delete; 
+
+    //new __Thread(...) 
+
     public:
     body_t body;
     void *arg;
@@ -48,4 +70,10 @@ class __Thread {
     ~__Thread() {
         MemoryAllocator::instance()->free(stack);
     }
+
+    static PoolAllocator *allocator;
+    static __Thread *create(body_t body, void *arg);
+    static __Thread *create();
+
+    //static PoolAllocator allocator;
 };

@@ -1,5 +1,5 @@
-	.section .text
-	.global  yield
+.section .text
+.global  yield
 
 yield:
 	addi     sp, sp, -256

@@ -42,4 +42,4 @@ void print_num(NUM x)
 
 void exit();
 uint64 div_roundup(uint64 x, uint64 y);
-void panic(const char *msg);
+void error(const char *msg);

@@ -1,6 +1,7 @@
 #include "../../h/kernel/Utils.hpp"
 #include "../../h/kernel/__Thread.hpp"
 #include "../../h/kernel/Scheduler.hpp"
+#include "../../h/kernel/PoolAllocator.hpp"
 
 void rec_print(uint64 x)
 {
@@ -37,20 +38,43 @@ void worker(void *arg)
 
 int main()
 {
-    __Thread t1(worker, (void *)"thread 1\n");
-    __Thread t2(worker, (void *)"thread 2\n");
-    __Thread t3(worker, (void *)"thread 3\n");
+    __Thread::allocator = new PoolAllocator(sizeof(__Thread), THREAD_COUNT);
 
-    __Thread main_thread;
-    Scheduler::instance()->running = &main_thread;
+    __Thread *t1 = __Thread::create(worker, (void *)"thread 1\n");
+    if (t1 == nullptr) {
+        error("thread1 alloc failed\n");
+    }
 
-    while (!t1.done || !t2.done || !t3.done)
+    __Thread *t2 = __Thread::create(worker, (void *)"thread 2\n");
+    if (t2 == nullptr) {
+        error("thread2 alloc failed\n");
+    }
+
+    __Thread *t3 = __Thread::create(worker, (void *)"thread 3\n");
+    if (t3 == nullptr) {
+        error("thread3 alloc failed\n");
+    }
+
+    __Thread *main_thread = __Thread::create();
+    if (main_thread == nullptr) {
+        error("main thread alloc failed\n");
+    }
+
+    Scheduler::instance()->running = main_thread;
+
+    while (!t1->done || !t2->done || !t3->done)
     {
         yield();
         print_string("returned to main\n");
     }
 
+    delete t1;
+    delete t2;
+    delete t3;
+    delete main_thread;
+
     print_string("exiting main\n");
 
+    delete __Thread::allocator;
     return 0;
 }

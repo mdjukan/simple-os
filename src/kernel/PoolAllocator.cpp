@@ -6,16 +6,16 @@
 PoolAllocator::PoolAllocator(uint64 elem_size, uint64 elem_count)
     : elem_size(elem_size), elem_count(elem_count)
 {
-    uint64 data_size = elem_size * elem_count;
-    data = MemoryAllocator::instance()->allocate(div_roundup(data_size, MEM_BLOCK_SIZE));
-    if (data==nullptr) {
-        panic("PoolAllocator constructor");
+    data = MemoryAllocator::instance()->allocate_bytes(elem_size * elem_count);
+    if (data == nullptr)
+    {
+        error("PoolAllocator constructor");
     }
 
-    uint64 free_size = sizeof(bool) * elem_count;
-    free = (bool *)MemoryAllocator::instance()->allocate(div_roundup(free_size, MEM_BLOCK_SIZE));
-    if (free==nullptr) {
-        panic("PoolAllocator constructor");
+    free = (bool *)MemoryAllocator::instance()->allocate_bytes(sizeof(bool) * elem_count);
+    if (free == nullptr)
+    {
+        error("PoolAllocator constructor");
     }
 
     for (uint64 i = 0; i < elem_count; i++)
@@ -26,8 +26,8 @@ PoolAllocator::PoolAllocator(uint64 elem_size, uint64 elem_count)
 
 PoolAllocator::~PoolAllocator()
 {
-    MemoryAllocator::instance()->free(data);
-    MemoryAllocator::instance()->free(free);
+    // MemoryAllocator::instance()->free(data);
+    // MemoryAllocator::instance()->free(free);
 }
 
 void *PoolAllocator::get()
@@ -46,5 +46,25 @@ void *PoolAllocator::get()
 
 void PoolAllocator::release(void *p)
 {
-    free[((uint8 *)p - (uint8 *)data) / elem_size] = true;
+    // sta ako pokaziva nije dosao iz alokatora ?
+    long idx = ((uint8 *)p - (uint8 *)data) / elem_size;
+    if (idx < 0 || idx >= (long)elem_count)
+    {
+        error("PoolAllocator invalid free");
+    }
+
+    free[idx] = true;
+}
+
+bool PoolAllocator::has_free()
+{
+    for (uint64 i = 0; i < elem_count; i++)
+    {
+        if (free[i])
+        {
+            return true;
+        }
+    }
+
+    return false;
 }

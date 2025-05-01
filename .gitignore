@@ -3,3 +3,4 @@ kernel
 !h/kernel/
 !src/kernel/
 kernel.asm
+*.s

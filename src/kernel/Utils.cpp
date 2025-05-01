@@ -16,8 +16,8 @@ void exit() {
     *exit_addr = exit_code;
 }
 
-void panic(const char *msg) {
-    print_string("[PANIC]");
+void error(const char *msg) {
+    print_string("[ERROR]");
     print_string(msg);
     print_string("\n");
     exit();
