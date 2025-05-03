@@ -3,8 +3,7 @@
 #include "../../lib/hw.h"
 #include "Scheduler.hpp"
 #include "PoolAllocator.hpp"
-
-class BadAlloc {};
+#include "../user/thread_wrapper.hpp"
 
 #define THREAD_COUNT 64
 
@@ -12,17 +11,22 @@ class BadAlloc {};
 #define REG_COUNT 32
 
 #define RA_IDX 1
+#define SP_IDX 2
 #define A0_IDX 10
+#define A1_IDX 11
+#define A2_IDX 12
+#define A3_IDX 13
 
-typedef void (*body_t)(void*);
+typedef void (*body_t)(void *);
 
 extern "C" void yield();
+extern "C" void restore_user_ctxt();
 
-void thread_wrapper(__Thread *thread);
-
-class __Thread {
-    public:
-    void *operator new(size_t size) {
+class __Thread
+{
+public:
+    void *operator new(size_t size)
+    {
         void *p = allocator->get();
 
         return p;
@@ -30,48 +34,92 @@ class __Thread {
 
     void *operator new[](size_t size) = delete;
 
-    void operator delete(void *p) noexcept {
+    void operator delete(void *p) noexcept
+    {
         allocator->release(p);
     }
 
-    void operator delete[](void *p) = delete; 
+    void operator delete[](void *p) = delete;
 
-    public:
+public:
     body_t body;
     void *arg;
-    void *stack;
-    void *stack_top;
+
+    void *kernel_stack;
+    void *user_stack;
+
+    void *user_stack_top;
+    void *kernel_stack_top;
 
     bool done = false;
     __Thread *next = nullptr;
 
-    uint64 sp;
+    uint64 kernel_sp;
+    uint64 sepc;
 
-    //konstruktor samo za main nit
+    uint64 *kernel_ctxt;
+    uint64 *user_ctxt;
+
+    // konstruktor samo za main nit
     __Thread()
-    : body(nullptr), arg(nullptr), stack(nullptr)
-    {}
+        : body(nullptr), arg(nullptr), kernel_stack(nullptr), user_stack(nullptr)
+    {
+    }
 
     __Thread(body_t body, void *arg)
-    : body(body), arg(arg) {
-        stack = MemoryAllocator::instance()->allocate_bytes(DEFAULT_STACK_SIZE);
-        stack_top = (void*)(((uint64)((uint8*)stack + DEFAULT_STACK_SIZE) / SP_ALIGN) * SP_ALIGN);
+        : body(body), arg(arg)
+    {
+        //TODO allocate error handeling
+        user_stack = MemoryAllocator::instance()->allocate_bytes(DEFAULT_STACK_SIZE);
+        user_stack_top = (void *)(((uint64)((uint8 *)user_stack + DEFAULT_STACK_SIZE) / SP_ALIGN) * SP_ALIGN);
 
-        uint64 *regs = (uint64*)stack_top - REG_COUNT;
-        regs[RA_IDX] = (uint64)thread_wrapper;
-        regs[A0_IDX] = (uint64)this;
+        kernel_stack = MemoryAllocator::instance()->allocate_bytes(DEFAULT_STACK_SIZE);
+        kernel_stack_top = (void *)(((uint64)((uint8 *)kernel_stack + DEFAULT_STACK_SIZE) / SP_ALIGN) * SP_ALIGN);
 
-        sp = (uint64)regs;
+        user_ctxt = (uint64 *)kernel_stack_top - REG_COUNT;
+        user_ctxt[A0_IDX] = (uint64)body;
+        user_ctxt[A1_IDX] = (uint64)arg;
+        user_ctxt[SP_IDX] = (uint64)user_stack_top;
+        sepc = (uint64)thread_wrapper;
+
+        kernel_ctxt = (uint64 *)kernel_stack_top - 2 * REG_COUNT;
+        kernel_ctxt[RA_IDX] = (uint64)restore_user_ctxt;
+
+        kernel_sp = (uint64)kernel_ctxt;
+
         Scheduler::instance()->put(this);
     }
 
-    ~__Thread() {
-        MemoryAllocator::instance()->free(stack);
+    ~__Thread()
+    {
+        MemoryAllocator::instance()->free(user_stack);
+        MemoryAllocator::instance()->free(kernel_stack);
     }
 
     static PoolAllocator *allocator;
     static __Thread *create(body_t body, void *arg);
     static __Thread *create();
 
-    //static PoolAllocator allocator;
+    //ocitavanju registre a0, a1, ... iz korisnickog konteksta
+//read_user_a0() -> a0 user ctxt
+//write_user_a0()
+    uint64 read_user_a0() {
+        return user_ctxt[A0_IDX];
+    }
+
+    void write_user_a0(uint64 val) {
+        user_ctxt[A0_IDX] = val;
+    }
+
+    uint64 read_user_a1() {
+        return user_ctxt[A1_IDX];
+    }
+
+    uint64 read_user_a2() {
+        return user_ctxt[A2_IDX];
+    }
+
+    uint64 read_user_a3() {
+        return user_ctxt[A3_IDX];
+    }
 };

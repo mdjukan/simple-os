@@ -2,9 +2,11 @@
 #include "../../h/kernel/Utils.hpp"
 #include "../../h/kernel/MemoryAllocator.hpp"
 
+#define HEAP_START_ADDR_FIX (void*)((uint8*)HEAP_START_ADDR + 10 * 1024)
+
 MemoryAllocator::MemoryAllocator()
 {
-    uint64 HEAP_SIZE = (uint8 *)HEAP_END_ADDR - (uint8 *)HEAP_START_ADDR;
+    uint64 HEAP_SIZE = (uint8 *)HEAP_END_ADDR - (uint8 *)HEAP_START_ADDR_FIX;
     BLOCK_COUNT = HEAP_SIZE / MEM_BLOCK_SIZE;
 
     for (uint64 i = 0; i < BLOCK_COUNT; i++)
@@ -23,12 +25,12 @@ MemoryAllocator::MemoryAllocator()
 
 void *MemoryAllocator::block_address(uint64 block)
 {
-    return (uint8 *)HEAP_START_ADDR + block * MEM_BLOCK_SIZE;
+    return (uint8 *)HEAP_START_ADDR_FIX + block * MEM_BLOCK_SIZE;
 }
 
 long MemoryAllocator::distnace_from_start(void *p)
 {
-    return (long)((uint8 *)p - (uint8 *)HEAP_START_ADDR);
+    return (long)((uint8 *)p - (uint8 *)HEAP_START_ADDR_FIX);
 }
 
 void MemoryAllocator::try_join_next(uint64 block)
@@ -123,9 +125,10 @@ void *MemoryAllocator::allocate_bytes(uint64 size)
     return allocate(size_in_blocks);
 }
 
+//TODO vraca kod greska, 0 za uspeh
 void MemoryAllocator::free(void *p)
 {
-    long distance = (long)((uint8 *)p - (uint8 *)HEAP_START_ADDR);
+    long distance = (long)((uint8 *)p - (uint8 *)HEAP_START_ADDR_FIX);
     if (distance % MEM_BLOCK_SIZE != 0 || distance < 0)
     {
         return;

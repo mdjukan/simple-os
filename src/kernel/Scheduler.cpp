@@ -1,5 +1,6 @@
 #include "../../h/kernel/__Thread.hpp"
 #include "../../h/kernel/Utils.hpp"
+#include "../../h/RISCV.hpp"
 
 void Scheduler::put(__Thread *thread)
 {
@@ -29,14 +30,25 @@ __Thread *Scheduler::get()
     return thread;
 }
 
-extern "C" uint64 sched(uint64 old_sp) {
+extern "C" uint64 sched(uint64 old_kernel_sp)
+{
     __Thread *old = Scheduler::instance()->running;
-    old->sp = old_sp;
+    old->kernel_sp = old_kernel_sp;
+    old->sepc = RISCV::r_sepc();
 
-    if (!old->done) {
+    if (!old->done)
+    {
         Scheduler::instance()->put(old);
     }
+    else
+    {
+        //delete old;
+    }
 
-    Scheduler::instance()->running = Scheduler::instance()->get();
-    return Scheduler::instance()->running->sp;
+    __Thread *next = Scheduler::instance()->get();
+    Scheduler::instance()->running = next;
+    RISCV::w_sepc(next->sepc);
+    
+    RISCV::w_sscratch((uint64)next->kernel_stack_top);
+    return Scheduler::instance()->running->kernel_sp;
 }

@@ -1,27 +1,27 @@
 #include "../../h/kernel/__Thread.hpp"
 
-void thread_wrapper(__Thread *thread) {
-    thread->body(thread->arg);
-    thread->done = true;
-    yield();
-}
+PoolAllocator *__Thread::allocator = nullptr;
 
-PoolAllocator* __Thread::allocator =  nullptr;
-
-__Thread *__Thread::create(body_t body, void *arg) {
+__Thread *__Thread::create(body_t body, void *arg)
+{
     if (__Thread::allocator->has_free())
     {
         return new __Thread(body, arg);
-    } else {
+    }
+    else
+    {
         return nullptr;
     }
 }
 
-__Thread *__Thread::create() {
+__Thread *__Thread::create()
+{
     if (__Thread::allocator->has_free())
     {
         return new __Thread();
-    } else {
+    }
+    else
+    {
         return nullptr;
     }
 }
