@@ -6,29 +6,23 @@ typedef void (*body_t)(void*);
 void thread_wrapper(body_t body, void *arg)
 {
     body(arg);
+    print_string("exiting\n");
     thread_exit();
 }
 
+void worker(void *arg) {
+    const char *msg = (const char *)arg;
+    for (int i=0; i<5; i++) {
+        print_string(msg);
+        thread_dispatch();
+    }
+}
+
 void user_main(void *arg) {
-    void *p1 = mem_alloc(1024);
-    print_string("ptr 1:");
-    print_num((uint64)p1);
-    print_string("\n");
+    thread_t t1, t2, t3;
 
-    //mem_free(p);
+    thread_create(&t1, worker, (void*)"t1\n");
+    thread_create(&t2, worker, (void*)"t2\n");
+    thread_create(&t3, worker, (void*)"t3\n");
 
-    void *p2 = mem_alloc(1024);
-    print_string("ptr 2:");
-    print_num((uint64)p2);
-    print_string("\n");
-
-    mem_free(p1);
-
-    p1 = mem_alloc(1024);
-    print_string("ptr 1 realloc:");
-    print_num((uint64)p1);
-    print_string("\n");
-
-
-    hello_world();
 }

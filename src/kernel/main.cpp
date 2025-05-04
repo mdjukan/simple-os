@@ -30,11 +30,9 @@ int main()
         error("user main alloc failed");
     }
 
-    while (!t1->done)
+    while (1)
     {
-        print_string("about to yield\n");
         yield();
-        print_string("returned to main\n");
     }
 
     delete t1;

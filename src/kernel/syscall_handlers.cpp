@@ -21,8 +21,25 @@ void sys_mem_free() {
     Scheduler::instance()->running->write_user_a0((uint64)0);
 }
 
+void sys_thread_create() {
+    __Thread **handle = (__Thread**)Scheduler::instance()->running->read_user_a1();
+    body_t body = (body_t)Scheduler::instance()->running->read_user_a2();
+    void *arg = (void*)Scheduler::instance()->running->read_user_a3();
+
+    *handle = __Thread::create(body, arg);
+    if (handle == nullptr) {
+        Scheduler::instance()->running->write_user_a0((uint64)-1);
+    } else {
+        Scheduler::instance()->running->write_user_a0((uint64)0);
+    }
+}
+
 void sys_thread_exit() {
     Scheduler::instance()->running->done = true;
+    yield();
+}
+
+void sys_thread_dispatch() {
     yield();
 }
 
@@ -35,7 +52,10 @@ void init_syscall_handlers() {
         syscall_handlers[i] = nullptr;
     }
 
+    syscall_handlers[SYS_thread_create] = sys_thread_create;
     syscall_handlers[SYS_thread_exit] = sys_thread_exit;
+    syscall_handlers[SYS_thread_dispatch] = sys_thread_dispatch;
+
     syscall_handlers[SYS_hello_world] = sys_hello_world;
     syscall_handlers[SYS_mem_alloc] = sys_mem_alloc;
     syscall_handlers[SYS_mem_free] = sys_mem_free;

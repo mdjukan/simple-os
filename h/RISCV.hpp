@@ -78,4 +78,12 @@ namespace RISCV {
     inline void w_a1(uint64 a1) {
         __asm__ volatile("mv a1, %0" : :"r" (a1));
     }
+
+    inline void w_a2(uint64 a2) {
+        __asm__ volatile("mv a2, %0" : :"r" (a2));
+    }
+
+    inline void w_a3(uint64 a3) {
+        __asm__ volatile("mv a3, %0" : :"r" (a3));
+    }
 };

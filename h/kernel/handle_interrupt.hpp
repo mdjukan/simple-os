@@ -18,7 +18,7 @@ extern "C" void handle_interrupt()
     uint64 scause = RISCV::r_scause();
     if (scause == SYSCALL)
     {
-        print_string("[INT-SYSCALL]\n");
+        //print_string("[INT-SYSCALL]\n");
         RISCV::w_sepc(RISCV::r_sepc() + 4);
 
         uint64 syscall_code = Scheduler::instance()->running->read_user_a0();
@@ -41,7 +41,7 @@ extern "C" void handle_interrupt()
     }
     else if (scause == TIMER)
     {
-        print_string("[INT-TIMER]\n");
+        //print_string("[INT-TIMER]\n");
         RISCV::clear_sip();
     }
 
