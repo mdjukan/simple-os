@@ -1,7 +1,6 @@
 #pragma once
 #include "../../lib/hw.h"
 
-#define HEAP_START_ADDR_FIX (void*)((uint8*)HEAP_START_ADDR + 10 * 1024)
 
 class MemoryAllocator
 {
@@ -13,7 +12,7 @@ public:
     }
 
 private:
-    long *map = (long *)HEAP_START_ADDR_FIX;
+    long *map = (long *)HEAP_START_ADDR;
     uint64 BLOCK_COUNT;
 
     MemoryAllocator();
