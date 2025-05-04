@@ -12,37 +12,19 @@ void thread_wrapper(body_t body, void *arg)
 #define ARR_SIZE 100
 void rec(int *arr, int idx)
 {
-    print_num((uint64)arr);
-    print_string(" - ");
-    print_num(idx);
-    print_string("\n");
 
     if (idx == ARR_SIZE)
     {
         return;
     }
 
-    print_num((uint64)arr);
-    print_string(" - ");
-    print_num(idx);
-    print_string("\n");
-
     if (arr[idx] != 0)
     {
         error("arr corrupted");
-    } else {
-        print_string("arr ok\n");
-    }
+    } 
 
     int ctrl = 99;
 
-    print_num(idx);
-    print_string(" - rec dispatch\n");
-    print_num((uint64)arr);
-    print_string(" - ");
-    print_num(idx);
-    print_string("\n");
-    thread_dispatch();
     rec(arr, idx + 1);
 
     if (ctrl != 99)
@@ -61,12 +43,10 @@ void worker(void *arg)
         arr[i] = 0;
     }
 
-    print_num(tid);
-    print_string("\n");
     rec(arr, 0);
 
     print_num(tid);
-    print_string(" ok\n");
+    print_string(" - ok\n");
     mem_free((void *)arr);
 }
 
