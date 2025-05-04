@@ -17,7 +17,12 @@ private:
     __Thread *ready_tail = nullptr;
 
 public:
+    uint64 active_threads = 0;
+
+    __Thread *idle_thread = nullptr;
+    __Thread *main_thread = nullptr;
     __Thread *running = nullptr;
+
     void put(__Thread *thread);
     __Thread *get();
 };

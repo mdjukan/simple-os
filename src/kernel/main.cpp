@@ -11,35 +11,39 @@ extern "C" void interrupt_routine();
 
 int main()
 {
-    init_syscall_handlers();
+    Syscalls::init_handlers();
     __Thread::allocator = new PoolAllocator(sizeof(__Thread), THREAD_COUNT);
+    
     RISCV::w_stvec((uint64)interrupt_routine);
-    RISCV::set_previous_privilege_to_user();
-    RISCV::set_previous_interrupt_enable();
+
+    RISCV::clear_SPP();
 
     __Thread *main_thread = __Thread::create();
     if (main_thread == nullptr)
     {
         error("main thread alloc failed");
     }
-    Scheduler::instance()->running = main_thread;
 
-    __Thread *t1 = __Thread::create(user_main, (void *)0);
-    if (t1 == nullptr)
+    Scheduler::instance()->running = main_thread;
+    Scheduler::instance()->main_thread = main_thread;
+
+    __Thread *idle_thread = __Thread::create_idle();
+    if (idle_thread == nullptr) {
+        error("idle thread alloc failed");
+    }
+
+    __Thread *umain = __Thread::create(user_main, (void *)0);
+    if (umain == nullptr)
     {
         error("user main alloc failed");
     }
 
-    while (1)
-    {
-        yield();
-    }
-
-    delete t1;
-    delete main_thread;
-
+    print_string("yielding from main\n");
+    yield();
     print_string("exiting main\n");
 
+    delete main_thread;
+    delete idle_thread;
     delete __Thread::allocator;
     return 0;
 }

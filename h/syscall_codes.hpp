@@ -10,6 +10,3 @@
 #define SYS_thread_exit (uint64)0x12
 #define SYS_thread_dispatch (uint64)0x13
 
-
-#define SYS_hello_world (uint64)0x15
-

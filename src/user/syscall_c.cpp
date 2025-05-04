@@ -1,7 +1,7 @@
 #include "../../lib/hw.h"
-#include "../RISCV.hpp"
-#include "../syscall_codes.hpp"
-#include "../syscall_c.hpp"
+#include "../../h/RISCV.hpp"
+#include "../../h/syscall_codes.hpp"
+#include "../../h/syscall_c.hpp"
 
 void *mem_alloc(size_t size) {
     RISCV::w_a1(size);
@@ -37,11 +37,5 @@ int thread_exit()
 void thread_dispatch()
 {
     RISCV::w_a0(SYS_thread_dispatch);
-    RISCV::ecall();
-}
-
-void hello_world()
-{
-    RISCV::w_a0(SYS_hello_world);
     RISCV::ecall();
 }

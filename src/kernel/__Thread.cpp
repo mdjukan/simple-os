@@ -25,3 +25,14 @@ __Thread *__Thread::create()
         return nullptr;
     }
 }
+
+__Thread *__Thread::create_idle() {
+    if (__Thread::allocator->has_free()) {
+        __Thread *idle_thread = new __Thread();
+        idle_thread->body = idle;
+        idle_thread->init();
+        return idle_thread;
+    } else {
+        return nullptr;
+    }
+}

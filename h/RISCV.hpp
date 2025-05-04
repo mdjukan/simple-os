@@ -65,13 +65,13 @@ namespace RISCV {
         __asm__ volatile("csrw sstatus, %0" : :"r" (sstatus));
     }
     
-    #define SPP (((uint64)1) << 8)
-    inline void set_previous_privilege_to_user() {
+    #define SPP (((uint64)1) << 8) //Supervisor Previous Privilige
+    inline void clear_SPP() {
         w_sstatus(r_sstatus() & ~SPP);
     }
 
-    #define SPIE (((uint64)1) << 5)
-    inline void set_previous_interrupt_enable() {
+    #define SPIE (((uint64)1) << 5) //Supervisor Previous Interrupt Enable
+    inline void clear_SPIE() {
         w_sstatus(r_sstatus() & ~SPIE);
     }
 

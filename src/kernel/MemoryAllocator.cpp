@@ -2,8 +2,6 @@
 #include "../../h/kernel/Utils.hpp"
 #include "../../h/kernel/MemoryAllocator.hpp"
 
-#define HEAP_START_ADDR_FIX (void*)((uint8*)HEAP_START_ADDR + 10 * 1024)
-
 MemoryAllocator::MemoryAllocator()
 {
     uint64 HEAP_SIZE = (uint8 *)HEAP_END_ADDR - (uint8 *)HEAP_START_ADDR_FIX;
@@ -15,7 +13,11 @@ MemoryAllocator::MemoryAllocator()
     }
 
     // map size in blocks:262101
-    uint64 MAP_SIZE = (BLOCK_COUNT * sizeof(long)) / MEM_BLOCK_SIZE;
+    uint64 map_size_bytes = BLOCK_COUNT * sizeof(long);
+    uint64 MAP_SIZE = map_size_bytes / MEM_BLOCK_SIZE;
+    if (map_size_bytes % MEM_BLOCK_SIZE != 0 ) {
+        MAP_SIZE += 1;
+    }
 
     map[0] = -MAP_SIZE; //- zauzet
     map[MAP_SIZE - 1] = -MAP_SIZE;
@@ -25,7 +27,7 @@ MemoryAllocator::MemoryAllocator()
 
 void *MemoryAllocator::block_address(uint64 block)
 {
-    return (uint8 *)HEAP_START_ADDR_FIX + block * MEM_BLOCK_SIZE;
+    return ((uint8 *)HEAP_START_ADDR_FIX) + block * MEM_BLOCK_SIZE;
 }
 
 long MemoryAllocator::distnace_from_start(void *p)
@@ -74,8 +76,7 @@ void *MemoryAllocator::allocate(uint64 size_in_blocks)
 {
     if (size_in_blocks == 0)
     {
-        print_string("EMPTY ALLOC\n");
-        exit();
+        error("zero alloc");
     }
 
     uint64 block = 0;
@@ -94,15 +95,16 @@ void *MemoryAllocator::allocate(uint64 size_in_blocks)
             if ((uint64)map[block] == size_in_blocks)
             {
                 long size = map[block];
-                map[block + (map[block] - 1)] *= -size;
-                map[block] *= -size;
+                map[block + (size-1)] = -size;
+                map[block] = -size;
             }
             else
             {
                 uint64 chunk_size = map[block];
-                uint64 leftover = map[block] - size_in_blocks;
+                uint64 leftover = chunk_size - size_in_blocks;
                 map[block] = -size_in_blocks;
                 map[block + (size_in_blocks - 1)] = -size_in_blocks;
+                
                 map[block + size_in_blocks] = leftover;
                 map[block + (chunk_size - 1)] = leftover;
             }

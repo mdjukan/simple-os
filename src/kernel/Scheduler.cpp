@@ -4,6 +4,11 @@
 
 void Scheduler::put(__Thread *thread)
 {
+    if (thread == main_thread || thread == idle_thread)
+    {
+        return;
+    }
+
     if (ready_head == nullptr)
     {
         ready_head = thread;
@@ -20,7 +25,11 @@ __Thread *Scheduler::get()
 {
     if (ready_head == nullptr)
     {
-        return nullptr;
+        if (active_threads > 0) {
+            return idle_thread;
+        } else {
+            return main_thread;
+        }
     }
 
     __Thread *thread = ready_head;
@@ -42,13 +51,14 @@ extern "C" uint64 sched(uint64 old_kernel_sp)
     }
     else
     {
-        //delete old;
+        Scheduler::instance()->active_threads -= 1;
+        delete old;
     }
 
     __Thread *next = Scheduler::instance()->get();
     Scheduler::instance()->running = next;
     RISCV::w_sepc(next->sepc);
-    
+
     RISCV::w_sscratch((uint64)next->kernel_stack_top);
     return Scheduler::instance()->running->kernel_sp;
 }

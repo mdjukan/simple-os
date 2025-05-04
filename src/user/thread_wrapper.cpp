@@ -1,28 +1,86 @@
 #include "../../h/syscall_c.hpp"
 #include "../../h/kernel/Utils.hpp"
 
-typedef void (*body_t)(void*);
+typedef void (*body_t)(void *);
 
 void thread_wrapper(body_t body, void *arg)
 {
     body(arg);
-    print_string("exiting\n");
     thread_exit();
 }
 
-void worker(void *arg) {
-    const char *msg = (const char *)arg;
-    for (int i=0; i<5; i++) {
-        print_string(msg);
-        thread_dispatch();
+#define ARR_SIZE 100
+void rec(int *arr, int idx)
+{
+    print_num((uint64)arr);
+    print_string(" - ");
+    print_num(idx);
+    print_string("\n");
+
+    if (idx == ARR_SIZE)
+    {
+        return;
+    }
+
+    print_num((uint64)arr);
+    print_string(" - ");
+    print_num(idx);
+    print_string("\n");
+
+    if (arr[idx] != 0)
+    {
+        error("arr corrupted");
+    } else {
+        print_string("arr ok\n");
+    }
+
+    int ctrl = 99;
+
+    print_num(idx);
+    print_string(" - rec dispatch\n");
+    print_num((uint64)arr);
+    print_string(" - ");
+    print_num(idx);
+    print_string("\n");
+    thread_dispatch();
+    rec(arr, idx + 1);
+
+    if (ctrl != 99)
+    {
+        error("ctrl corrupted");
     }
 }
 
-void user_main(void *arg) {
-    thread_t t1, t2, t3;
+void worker(void *arg)
+{
+    uint64 tid = (uint64)arg;
+    int *arr = (int *)mem_alloc(sizeof(int) * ARR_SIZE);
 
-    thread_create(&t1, worker, (void*)"t1\n");
-    thread_create(&t2, worker, (void*)"t2\n");
-    thread_create(&t3, worker, (void*)"t3\n");
+    for (int i = 0; i < ARR_SIZE; i++)
+    {
+        arr[i] = 0;
+    }
 
+    print_num(tid);
+    print_string("\n");
+    rec(arr, 0);
+
+    print_num(tid);
+    print_string(" ok\n");
+    mem_free((void *)arr);
+}
+
+void idle(void *arg)
+{
+    thread_dispatch();
+}
+
+#define TCOUNT 20
+void user_main(void *arg)
+{
+    for (uint64 i = 0; i < TCOUNT; i++)
+    {
+        thread_t t;
+        thread_create(&t, worker, (void *)i);
+    }
 }

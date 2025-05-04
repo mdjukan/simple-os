@@ -18,18 +18,17 @@ extern "C" void handle_interrupt()
     uint64 scause = RISCV::r_scause();
     if (scause == SYSCALL)
     {
-        //print_string("[INT-SYSCALL]\n");
+        // print_string("[INT-SYSCALL]\n");
         RISCV::w_sepc(RISCV::r_sepc() + 4);
 
         uint64 syscall_code = Scheduler::instance()->running->read_user_a0();
-        if (syscall_code < SYS_COUNT && syscall_handlers[syscall_code] != nullptr)
+        if (syscall_code < SYS_COUNT && Syscalls::handlers[syscall_code] != nullptr)
         {
-            syscall_handlers[syscall_code]();
+            Syscalls::handlers[syscall_code]();
         }
         else
         {
-            //sistemski poziv sa nevalidnom kodom
-            //TODO error handling
+            error("invalid syscall code");
         }
 
         RISCV::clear_sip();
@@ -41,31 +40,40 @@ extern "C" void handle_interrupt()
     }
     else if (scause == TIMER)
     {
-        //print_string("[INT-TIMER]\n");
+        // print_string("[INT-TIMER]\n");
         RISCV::clear_sip();
     }
 
-    /*     if (scause == INVALID_READ) {
-            print_string("sepc=");
-            print_num(RISCV::r_sepc());
-            print_string("\n");
-            error("invalid read");
-        } else if (scause == INVALID_WRITE) {
-            print_string("sepc=");
-            print_num(RISCV::r_sepc());
-            print_string("\n");
-            error("invalid read");
-        } else if (scause == ILEGAL_INSTRUCTION) {
-            print_string("sepc=");
-            print_num(RISCV::r_sepc());
-            print_string("\n");
-            error("ilegal instruction");
-        } else if (scause == INSTRUCTION_ACCESS_FAULT) {
-            print_string("sepc=");
-            print_num(RISCV::r_sepc());
-            print_string("\n");
-            error("instruction access fault");
-        }  */
+    if (scause == INVALID_READ)
+    {
+        print_string("sepc=");
+        print_num(RISCV::r_sepc());
+        print_string("\n");
+        print_num(Scheduler::instance()->running->user_ctxt[A0_IDX+5]);
+        print_string("\n");
+        error("invalid read");
+    }
+    else if (scause == INVALID_WRITE)
+    {
+        print_string("sepc=");
+        print_num(RISCV::r_sepc());
+        print_string("\n");
+        error("invalid read");
+    }
+    else if (scause == ILEGAL_INSTRUCTION)
+    {
+        print_string("sepc=");
+        print_num(RISCV::r_sepc());
+        print_string("\n");
+        error("ilegal instruction");
+    }
+    else if (scause == INSTRUCTION_ACCESS_FAULT)
+    {
+        print_string("sepc=");
+        print_num(RISCV::r_sepc());
+        print_string("\n");
+        error("instruction access fault");
+    }
 
     RISCV::w_sscratch((uint64)Scheduler::instance()->running->kernel_stack_top);
 }

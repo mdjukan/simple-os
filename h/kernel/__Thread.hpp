@@ -60,7 +60,6 @@ public:
     uint64 *kernel_ctxt;
     uint64 *user_ctxt;
 
-    // konstruktor samo za main nit
     __Thread()
         : body(nullptr), arg(nullptr), kernel_stack(nullptr), user_stack(nullptr)
     {
@@ -69,7 +68,14 @@ public:
     __Thread(body_t body, void *arg)
         : body(body), arg(arg)
     {
-        //TODO allocate error handeling
+        init();
+        Scheduler::instance()->active_threads += 1;
+        Scheduler::instance()->put(this);
+    }
+
+    void init()
+    {
+        // TODO allocate error handeling
         user_stack = MemoryAllocator::instance()->allocate_bytes(DEFAULT_STACK_SIZE);
         user_stack_top = (void *)(((uint64)((uint8 *)user_stack + DEFAULT_STACK_SIZE) / SP_ALIGN) * SP_ALIGN);
 
@@ -86,8 +92,6 @@ public:
         kernel_ctxt[RA_IDX] = (uint64)restore_user_ctxt;
 
         kernel_sp = (uint64)kernel_ctxt;
-
-        Scheduler::instance()->put(this);
     }
 
     ~__Thread()
@@ -99,27 +103,33 @@ public:
     static PoolAllocator *allocator;
     static __Thread *create(body_t body, void *arg);
     static __Thread *create();
+    static __Thread *create_idle();
 
-    //ocitavanju registre a0, a1, ... iz korisnickog konteksta
-//read_user_a0() -> a0 user ctxt
-//write_user_a0()
-    uint64 read_user_a0() {
+    // ocitavanju registre a0, a1, ... iz korisnickog konteksta
+    // read_user_a0() -> a0 user ctxt
+    // write_user_a0()
+    uint64 read_user_a0()
+    {
         return user_ctxt[A0_IDX];
     }
 
-    void write_user_a0(uint64 val) {
+    void write_user_a0(uint64 val)
+    {
         user_ctxt[A0_IDX] = val;
     }
 
-    uint64 read_user_a1() {
+    uint64 read_user_a1()
+    {
         return user_ctxt[A1_IDX];
     }
 
-    uint64 read_user_a2() {
+    uint64 read_user_a2()
+    {
         return user_ctxt[A2_IDX];
     }
 
-    uint64 read_user_a3() {
+    uint64 read_user_a3()
+    {
         return user_ctxt[A3_IDX];
     }
 };
