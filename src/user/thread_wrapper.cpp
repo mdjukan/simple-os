@@ -52,7 +52,9 @@ void worker(void *arg)
 
 void idle(void *arg)
 {
-    thread_dispatch();
+    while (1) {
+        thread_dispatch();
+    }
 }
 
 #define TCOUNT 20

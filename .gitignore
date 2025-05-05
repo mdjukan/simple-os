@@ -4,3 +4,5 @@ kernel
 !src/kernel/
 kernel.asm
 *.s
+LICENCE
+lib/
