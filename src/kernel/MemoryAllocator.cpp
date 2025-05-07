@@ -15,7 +15,8 @@ MemoryAllocator::MemoryAllocator()
     // map size in blocks:262101
     uint64 map_size_bytes = BLOCK_COUNT * sizeof(long);
     uint64 MAP_SIZE = map_size_bytes / MEM_BLOCK_SIZE;
-    if (map_size_bytes % MEM_BLOCK_SIZE != 0 ) {
+    if (map_size_bytes % MEM_BLOCK_SIZE != 0)
+    {
         MAP_SIZE += 1;
     }
 
@@ -95,7 +96,7 @@ void *MemoryAllocator::allocate(uint64 size_in_blocks)
             if ((uint64)map[block] == size_in_blocks)
             {
                 long size = map[block];
-                map[block + (size-1)] = -size;
+                map[block + (size - 1)] = -size;
                 map[block] = -size;
             }
             else
@@ -104,7 +105,7 @@ void *MemoryAllocator::allocate(uint64 size_in_blocks)
                 uint64 leftover = chunk_size - size_in_blocks;
                 map[block] = -size_in_blocks;
                 map[block + (size_in_blocks - 1)] = -size_in_blocks;
-                
+
                 map[block + size_in_blocks] = leftover;
                 map[block + (chunk_size - 1)] = leftover;
             }
@@ -127,24 +128,29 @@ void *MemoryAllocator::allocate_bytes(uint64 size)
     return allocate(size_in_blocks);
 }
 
-//TODO vraca kod greska, 0 za uspeh
-void MemoryAllocator::free(void *p)
+// TODO bolje mesto za ove konstante
+#define SUCCESS 0
+#define ADDR_NOT_ALIGNED -1
+#define ADDR_NOT_ON_HEAP -2
+#define NOT_ALLOCATED -3
+
+int MemoryAllocator::free(void *p)
 {
     long distance = (long)((uint8 *)p - (uint8 *)HEAP_START_ADDR);
-    if (distance % MEM_BLOCK_SIZE != 0 || distance < 0)
+    if (distance % MEM_BLOCK_SIZE != 0)
     {
-        return;
+        return ADDR_NOT_ALIGNED;
     }
 
     uint64 block = distance / MEM_BLOCK_SIZE;
-    if (block > BLOCK_COUNT)
+    if (distance < 0 || block > BLOCK_COUNT)
     {
-        return;
+        return ADDR_NOT_ON_HEAP;
     }
 
     if (map[block] >= 0)
     {
-        return;
+        return NOT_ALLOCATED;
     }
 
     long size = -map[block];
@@ -154,6 +160,8 @@ void MemoryAllocator::free(void *p)
 
     try_join_next(block);
     try_join_prev(block);
+
+    return SUCCESS;
 }
 
 void MemoryAllocator::print_map()

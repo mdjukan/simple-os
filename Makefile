@@ -112,6 +112,7 @@ clean:
 	rm -f ${KERNEL_IMG} ${KERNEL_ASM}
 	rm -fr ${DIR_BUILD}
 	rm -f .gdbinit
+	find ./ -type f -name "*.s" -exec rm {} +
 
 # try to generate a unique GDB port
 GDBPORT = $(shell expr `id -u` % 5000 + 25000)

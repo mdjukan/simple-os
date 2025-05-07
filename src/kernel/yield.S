@@ -1,5 +1,5 @@
-.section .text
-.global  yield
+	.section .text
+	.global  yield
 
 yield:
 	addi     sp, sp, -256
@@ -45,7 +45,7 @@ yield:
 	ld       x1, 1 * 8(sp)
 #ld x2, 2 * 8(sp)
 	ld       x3, 3 * 8(sp)
-#	ld       x4, 4 * 8(sp)
+# ld x4, 4 * 8(sp)
 	ld       x5, 5 * 8(sp)
 	ld       x6, 6 * 8(sp)
 	ld       x7, 7 * 8(sp)

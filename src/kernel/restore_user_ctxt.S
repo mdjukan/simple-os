@@ -5,7 +5,7 @@ restore_user_ctxt:
     ld       x0, 0 * 8(sp)
     ld       x1, 1 * 8(sp)
     ld       x3, 3 * 8(sp)
-   # ld       x4, 4 * 8(sp)
+# ld x4, 4 * 8(sp)
     ld       x5, 5 * 8(sp)
     ld       x6, 6 * 8(sp)
     ld       x7, 7 * 8(sp)

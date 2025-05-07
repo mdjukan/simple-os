@@ -1,7 +1,6 @@
 #pragma once
 #include "../../lib/hw.h"
 
-
 class MemoryAllocator
 {
 public:
@@ -24,8 +23,8 @@ private:
 public:
     void *allocate(uint64 size_in_blocks);
     void *allocate_bytes(uint64 size);
-    void free(void *p);
+    int free(void *p);
 
-    //debug
+    // debug
     void print_map();
 };

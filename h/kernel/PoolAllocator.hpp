@@ -21,11 +21,13 @@ public:
     ~PoolAllocator();
     void *get();
     void release(void *p);
-    bool has_free();
+    bool full();
 
 private:
     uint64 elem_size;
     uint64 elem_count;
+
+    uint64 free_count;
 
     void *data;
     bool *free;

@@ -2,6 +2,12 @@
 #include "../../h/kernel/Utils.hpp"
 #include "../../h/RISCV.hpp"
 
+void Scheduler::add_new_thread(__Thread *thread)
+{
+    active_threads += 1;
+    put(thread);
+}
+
 void Scheduler::put(__Thread *thread)
 {
     if (thread == main_thread || thread == idle_thread)
@@ -9,34 +15,26 @@ void Scheduler::put(__Thread *thread)
         return;
     }
 
-    if (ready_head == nullptr)
-    {
-        ready_head = thread;
-        ready_tail = thread;
-    }
-    else
-    {
-        ready_tail->next = thread;
-        ready_tail = thread;
-    }
+    ready.put(thread);
 }
 
 __Thread *Scheduler::get()
 {
-    if (ready_head == nullptr)
+    __Thread *thread = ready.get();
+
+    if (thread != nullptr)
     {
-        if (active_threads > 0) {
-            return idle_thread;
-        } else {
-            return main_thread;
-        }
+        return thread;
     }
 
-    __Thread *thread = ready_head;
-    ready_head = thread->next;
-    thread->next = nullptr;
-
-    return thread;
+    if (active_threads > 0)
+    {
+        return idle_thread;
+    }
+    else
+    {
+        return main_thread;
+    }
 }
 
 extern "C" uint64 sched(uint64 old_kernel_sp)
@@ -45,14 +43,14 @@ extern "C" uint64 sched(uint64 old_kernel_sp)
     old->kernel_sp = old_kernel_sp;
     old->sepc = RISCV::r_sepc();
 
-    if (!old->done)
-    {
-        Scheduler::instance()->put(old);
-    }
-    else
+    if (old->done)
     {
         Scheduler::instance()->active_threads -= 1;
         delete old;
+    }
+    else if (!old->suspended)
+    {
+        Scheduler::instance()->put(old);
     }
 
     __Thread *next = Scheduler::instance()->get();
