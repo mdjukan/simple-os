@@ -16,3 +16,5 @@
 #define SYS_sem_signal (uint64)0x24
 #define SYS_sem_timedwait (uint64)0x25
 #define SYS_sem_trywait (uint64)0x26
+
+#define SYS_time_sleep (uint64)0x31

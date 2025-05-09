@@ -11,7 +11,20 @@ public:
     uint64 thread_count = 0;
 
     __Thread *get();
-    void put(__Thread *thread);
+    virtual void put(__Thread *thread);
 
     bool empty();
+    void remove_thread(__Thread *thread);
+};
+
+class SleepingThreadList : public ThreadList
+{
+public:
+    void put(__Thread *thread) override;
+    virtual void update_ticks();
+};
+
+class TimedwaitThreadList : public SleepingThreadList {
+public:
+    void update_ticks() override;
 };

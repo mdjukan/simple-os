@@ -4,6 +4,7 @@
 #include "MemoryAllocator.hpp"
 #include "Scheduler.hpp"
 #include "PoolAllocator.hpp"
+#include "__Semaphore.hpp"
 
 extern "C" void yield();
 extern "C" void restore_user_ctxt();
@@ -21,6 +22,13 @@ public:
 
     void *kernel_stack_top;
 
+    bool wait_failed = false;
+
+    uint64 sleep_ticks;
+
+    bool timed_wait = false;
+    __Semaphore *blocked_on = nullptr;
+    
 private:
     body_t body;
     void *arg;

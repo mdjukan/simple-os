@@ -14,5 +14,14 @@ namespace Syscalls
     void sys_thread_exit();
     void sys_thread_dispatch();
 
+    void sys_sem_open();
+    void sys_sem_close();
+    void sys_sem_wait();
+    void sys_sem_signal();
+    void sys_sem_timedwait();
+    void sys_sem_trywait();
+
+    void sys_time_sleep();
+
     void init_handlers();
 };

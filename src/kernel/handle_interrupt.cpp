@@ -3,6 +3,7 @@
 #include "../../h/RISCV.hpp"
 #include "../../h/kernel/Scheduler.hpp"
 #include "../../h/kernel/__Thread.hpp"
+#include "../../h/kernel/Timer.hpp"
 
 #define TIMER ((((uint64)1) << 63) + (uint64)1)
 #define SYSCALL ((uint64)8)
@@ -48,7 +49,7 @@ extern "C" void handle_interrupt()
             error("invalid syscall code");
         }
 
-        RISCV::clear_sip();
+        //RISCV::clear_sip();
     }
     else if (scause == CONSOLE)
     {
@@ -57,7 +58,7 @@ extern "C" void handle_interrupt()
     }
     else if (scause == TIMER)
     {
-        // print_string("[INT-TIMER]\n");
+        Timer::instance()->handle_interrupt();
         RISCV::clear_sip();
     }
     else

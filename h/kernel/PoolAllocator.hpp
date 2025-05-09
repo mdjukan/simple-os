@@ -22,6 +22,7 @@ public:
     void *get();
     void release(void *p);
     bool full();
+    bool valid_ptr(void *p);
 
 private:
     uint64 elem_size;

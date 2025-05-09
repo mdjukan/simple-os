@@ -47,14 +47,25 @@ void *PoolAllocator::get()
 
 void PoolAllocator::release(void *p)
 {
-    long idx = ((uint8 *)p - (uint8 *)data) / elem_size;
-    if (idx < 0 || idx >= (long)elem_count)
+    if (!valid_ptr(p))
     {
         error("PoolAllocator invalid free");
     }
 
+    long idx = ((uint8 *)p - (uint8 *)data) / elem_size;
     free_count += 1;
     free[idx] = true;
+}
+
+bool PoolAllocator::valid_ptr(void *p)
+{
+    long idx = ((uint8 *)p - (uint8 *)data) / elem_size;
+    if (idx < 0 || idx >= (long)elem_count || free[idx])
+    {
+        return false;
+    }
+
+    return true;
 }
 
 bool PoolAllocator::full()

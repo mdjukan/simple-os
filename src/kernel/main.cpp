@@ -6,6 +6,8 @@
 #include "../../h/kernel/Scheduler.hpp"
 #include "../../h/kernel/PoolAllocator.hpp"
 
+#include "../../h/kernel/__Semaphore.hpp"
+
 #include "../../h/kernel/syscall_handlers.hpp"
 #include "../../h/kernel/handle_interrupt.hpp"
 #include "../../h/user/thread_wrapper.hpp"
@@ -17,6 +19,7 @@ int main()
 {
     Syscalls::init_handlers();
     __Thread::allocator = new PoolAllocator(sizeof(__Thread), THREAD_COUNT);
+    __Semaphore::allocator = new PoolAllocator(sizeof(__Semaphore), SEMAPHORE_COUNT);
 
     RISCV::w_stvec((uint64)interrupt_routine);
     RISCV::clear_SPP();
@@ -38,7 +41,8 @@ int main()
 
     Scheduler::instance()->idle_thread = idle_thread;
 
-    __Thread *user_main = __Thread::create((body_t)userMain, nullptr);
+    /*     __Thread *user_main = __Thread::create((body_t)userMain, nullptr); */
+    __Thread *user_main = __Thread::create(timer_test, nullptr);
     if (user_main == nullptr)
     {
         error("user main alloc failed");
@@ -50,7 +54,7 @@ int main()
 
     delete main_thread;
     delete idle_thread;
-    delete user_main;
     delete __Thread::allocator;
+    delete __Semaphore::allocator;
     return 0;
 }

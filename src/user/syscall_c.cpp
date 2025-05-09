@@ -41,3 +41,31 @@ void thread_dispatch()
 {
     RISCV::make_syscall(SYS_thread_dispatch);
 }
+
+int sem_open(sem_t *handle, unsigned init) {
+    return (int)RISCV::make_syscall(SYS_sem_open, (uint64)handle, (uint64)init);
+}
+
+int sem_close(sem_t handle) {
+    return (int)RISCV::make_syscall(SYS_sem_close, (uint64)handle);
+}
+
+int sem_wait(sem_t id) {
+    return (int)RISCV::make_syscall(SYS_sem_wait, (uint64)id);
+}
+
+int sem_signal(sem_t id) {
+    return (int)RISCV::make_syscall(SYS_sem_signal, (uint64)id);
+}
+
+int sem_timedwait(sem_t id, time_t timeout) {
+    return (int)RISCV::make_syscall(SYS_sem_timedwait, (uint64)id, (uint64)timeout);
+}
+
+int sem_trywait(sem_t id) {
+    return (int)RISCV::make_syscall(SYS_sem_trywait, (uint64)id);
+}
+
+int time_sleep(time_t time) {
+    return (int)RISCV::make_syscall(SYS_time_sleep, (uint64)time);
+}
