@@ -69,3 +69,11 @@ int sem_trywait(sem_t id) {
 int time_sleep(time_t time) {
     return (int)RISCV::make_syscall(SYS_time_sleep, (uint64)time);
 }
+
+char getc() {
+    return (char)RISCV::make_syscall(SYS_getc);
+}
+
+void putc(char c) {
+    RISCV::make_syscall(SYS_putc, (uint64)c);
+}

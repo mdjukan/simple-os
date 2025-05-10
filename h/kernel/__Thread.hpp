@@ -25,6 +25,7 @@ public:
     bool wait_failed = false;
 
     uint64 sleep_ticks;
+    uint64 running_ticks;
 
     bool timed_wait = false;
     __Semaphore *blocked_on = nullptr;

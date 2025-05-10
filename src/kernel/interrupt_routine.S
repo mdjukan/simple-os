@@ -4,15 +4,13 @@
     .align   4
 
 interrupt_routine:
-    sd       ra, -8(sp)
-    mv       ra, sp
-    csrrw    sp, sscratch, ra
-    ld       ra, -8(ra)
+    csrrw    sp, sscratch, sp
 
     addi     sp, sp, -256
 
     sd       x0, 0 * 8(sp)
     sd       x1, 1 * 8(sp)
+
     csrr     x1, sscratch
     sd       x1, 2 * 8(sp)
 

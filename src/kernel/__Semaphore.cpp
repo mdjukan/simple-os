@@ -37,8 +37,8 @@ void __Semaphore::signal()
     }
 }
 
-#define SEM_SUCCESS 0
-#define SEM_FAIL 1
+#define SEM_WAIT_SUCCEEDED 0
+#define SEM_WAIT_FAILED 1
 
 int __Semaphore::wait()
 {
@@ -55,11 +55,11 @@ int __Semaphore::wait()
 
         if (thread->wait_failed)
         {
-            return SEM_FAIL;
+            return SEM_WAIT_FAILED;
         }
     }
 
-    return SEM_SUCCESS;
+    return SEM_WAIT_SUCCEEDED;
 }
 
 int __Semaphore::try_wait()
@@ -67,11 +67,11 @@ int __Semaphore::try_wait()
     if (val > 0)
     {
         val -= 1;
-        return SEM_SUCCESS;
+        return SEM_WAIT_SUCCEEDED;
     }
     else
     {
-        return SEM_FAIL;
+        return SEM_WAIT_FAILED;
     }
 }
 
@@ -95,7 +95,6 @@ int __Semaphore::timedwait(time_t time)
     if (val > 0)
     {
         val -= 1;
-        return SEM_SUCCESS;
     }
     else
     {
@@ -105,7 +104,7 @@ int __Semaphore::timedwait(time_t time)
         thread->blocked_on = this;
         blocked.put(thread);
         Timer::instance()->add_timedwait(thread, time);
-        
+
         yield();
 
         thread->blocked_on = nullptr;
@@ -113,13 +112,11 @@ int __Semaphore::timedwait(time_t time)
 
         if (thread->wait_failed)
         {
-            return SEM_FAIL;
-        }
-        else
-        {
-            return SEM_SUCCESS;
+            return SEM_WAIT_FAILED;
         }
     }
+
+    return SEM_WAIT_SUCCEEDED;
 }
 
 void __Semaphore::remove_blocked(__Thread *thread)

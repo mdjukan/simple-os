@@ -2,7 +2,6 @@
 #define _PRINTING_HPP_
 
 #include "../h/syscall_c.h"
-#include "getc_putc.hpp"
 
 typedef unsigned long uint64;
 

@@ -8,16 +8,16 @@
 
 #include "../../h/kernel/__Semaphore.hpp"
 
-#include "../../h/kernel/syscall_handlers.hpp"
+#include "../../h/kernel/SyscallHandlers.hpp"
 #include "../../h/kernel/handle_interrupt.hpp"
 #include "../../h/user/thread_wrapper.hpp"
-#include "../../tests/userMain.hpp"
+#include "../../test/userMain.hpp"
 
 extern "C" void interrupt_routine();
 
 int main()
 {
-    Syscalls::init_handlers();
+    SyscallHandlers::init_handlers();
     __Thread::allocator = new PoolAllocator(sizeof(__Thread), THREAD_COUNT);
     __Semaphore::allocator = new PoolAllocator(sizeof(__Semaphore), SEMAPHORE_COUNT);
 
@@ -41,8 +41,13 @@ int main()
 
     Scheduler::instance()->idle_thread = idle_thread;
 
-    /*     __Thread *user_main = __Thread::create((body_t)userMain, nullptr); */
-    __Thread *user_main = __Thread::create(timer_test, nullptr);
+    __Thread *user_main = __Thread::create((body_t)userMain, nullptr);
+    //__Thread *user_main = __Thread::create(console_test, nullptr);
+    //__Thread *user_main = __Thread::create(timer_test, nullptr);
+    //__Thread *user_main = __Thread::create(periodic_test, nullptr);
+    //__Thread *user_main = __Thread::create(error_code_test, nullptr);
+    //__Thread *user_main = __Thread::create(sem_test, nullptr);
+
     if (user_main == nullptr)
     {
         error("user main alloc failed");

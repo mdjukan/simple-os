@@ -1,6 +1,6 @@
 #pragma once
-#include "../../lib/console.h"
 #include "../../lib/hw.h"
+#include "__Console.hpp"
 
 void print_string(const char *str);
 
@@ -10,7 +10,7 @@ void print_num(NUM x)
 {
     if (x == 0)
     {
-        __putc('0');
+        __Console::instance()->putc('0');
         return;
     }
 

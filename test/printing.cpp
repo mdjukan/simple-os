@@ -56,7 +56,7 @@ void printInt(int xx, int base, int sgn)
     LOCK();
     char buf[16];
     int i, neg;
-    uint64 x;
+    unsigned x;
 
     neg = 0;
     if(sgn && xx < 0){

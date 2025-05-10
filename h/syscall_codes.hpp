@@ -1,7 +1,7 @@
 #pragma once
 #include "../lib/hw.h"
 
-#define SYS_COUNT (uint64)0x42
+#define SYS_COUNT (uint64)0x50
 
 #define SYS_mem_alloc (uint64)0x01
 #define SYS_mem_free (uint64)0x02
@@ -18,3 +18,6 @@
 #define SYS_sem_trywait (uint64)0x26
 
 #define SYS_time_sleep (uint64)0x31
+
+#define SYS_getc (uint64)0x41
+#define SYS_putc (uint64)0x42

@@ -1,11 +1,11 @@
-#include "../../lib/console.h"
 #include "../../lib/hw.h"
+#include "../../h/kernel/__Console.hpp"
 
 void print_string(const char *str)
 {
     while (*str != '\0')
     {
-        __putc(*str);
+        __Console::instance()->putc(*str);
         str += 1;
     }
 }

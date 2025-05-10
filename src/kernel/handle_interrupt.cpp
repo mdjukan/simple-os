@@ -1,13 +1,14 @@
 #include "../../lib/hw.h"
-#include "../../h/kernel/syscall_handlers.hpp"
+#include "../../h/kernel/SyscallHandlers.hpp"
 #include "../../h/RISCV.hpp"
 #include "../../h/kernel/Scheduler.hpp"
 #include "../../h/kernel/__Thread.hpp"
 #include "../../h/kernel/Timer.hpp"
+#include "../../h/kernel/__Console.hpp"
 
 #define TIMER ((((uint64)1) << 63) + (uint64)1)
 #define SYSCALL ((uint64)8)
-#define CONSOLE ((((uint64)1) << 63) + (uint64)9)
+#define HARDWARE_INTERRUPT ((((uint64)1) << 63) + (uint64)9)
 
 #define INVALID_READ ((uint64)5)
 #define INVALID_WRITE ((uint64)7)
@@ -33,28 +34,33 @@ const char *error_message(uint64 scause)
 
 extern "C" void handle_interrupt()
 {
+    __Console::instance()->handle_interrupt();
     uint64 scause = RISCV::r_scause();
+
     if (scause == SYSCALL)
     {
-        // print_string("[INT-SYSCALL]\n");
         RISCV::w_sepc(RISCV::r_sepc() + 4);
 
         uint64 syscall_code = Scheduler::instance()->running->read_user_a0();
-        if (syscall_code < SYS_COUNT && Syscalls::handlers[syscall_code] != nullptr)
+        if (syscall_code < SYS_COUNT && SyscallHandlers::handlers[syscall_code] != nullptr)
         {
-            Syscalls::handlers[syscall_code]();
+            SyscallHandlers::handlers[syscall_code]();
         }
         else
         {
             error("invalid syscall code");
         }
-
-        //RISCV::clear_sip();
     }
-    else if (scause == CONSOLE)
+    else if (scause == HARDWARE_INTERRUPT)
     {
-        // print_string("[INT-CONSOLE]\n");
-        console_handler();
+        int irq = plic_claim();
+
+        if (irq == CONSOLE_IRQ)
+        {
+            //__Console::instance()->handle_interrupt();
+        }
+
+        plic_complete(irq);
     }
     else if (scause == TIMER)
     {

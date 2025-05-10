@@ -14,7 +14,11 @@ void Thread::run_wrapper(void *arg)
 
 int Thread::start()
 {
-    return thread_create(&handle, Thread::run_wrapper, (void *)this);
+    if (body==nullptr) {
+        return thread_create(&handle, Thread::run_wrapper, (void *)this);
+    } else {
+        return thread_create(&handle, body, arg);
+    }
 }
 
 void Thread::dispatch()
@@ -24,6 +28,5 @@ void Thread::dispatch()
 
 int Thread::sleep(time_t time)
 {
-    // TODO
-    return 0;
+    return time_sleep(time);
 }

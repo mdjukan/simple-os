@@ -128,29 +128,28 @@ void *MemoryAllocator::allocate_bytes(uint64 size)
     return allocate(size_in_blocks);
 }
 
-// TODO bolje mesto za ove konstante
 #define SUCCESS 0
-#define ADDR_NOT_ALIGNED -1
-#define ADDR_NOT_ON_HEAP -2
-#define NOT_ALLOCATED -3
+#define ERROR_ADDR_NOT_ALIGNED -1
+#define ERROR_ADDR_NOT_ON_HEAP -2
+#define ERROR_NOT_ALLOCATED -3
 
 int MemoryAllocator::free(void *p)
 {
     long distance = (long)((uint8 *)p - (uint8 *)HEAP_START_ADDR);
     if (distance % MEM_BLOCK_SIZE != 0)
     {
-        return ADDR_NOT_ALIGNED;
+        return ERROR_ADDR_NOT_ALIGNED;
     }
 
     uint64 block = distance / MEM_BLOCK_SIZE;
     if (distance < 0 || block > BLOCK_COUNT)
     {
-        return ADDR_NOT_ON_HEAP;
+        return ERROR_ADDR_NOT_ON_HEAP;
     }
 
     if (map[block] >= 0)
     {
-        return NOT_ALLOCATED;
+        return ERROR_NOT_ALLOCATED;
     }
 
     long size = -map[block];

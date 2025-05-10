@@ -35,6 +35,12 @@ public:
     void handle_interrupt() {
         sleeping.update_ticks();
         timedwait.update_ticks();
+
+        __Thread *running = Scheduler::instance()->running;
+        running->running_ticks += 1;
+        if (running->running_ticks >= DEFAULT_TIME_SLICE) {
+            yield();
+        }
     }
 
     void remove_timedwait(__Thread *thread) {

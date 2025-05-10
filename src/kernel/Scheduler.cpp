@@ -54,6 +54,7 @@ extern "C" uint64 sched(uint64 old_kernel_sp)
     }
 
     __Thread *next = Scheduler::instance()->get();
+    next->running_ticks = 0;
     Scheduler::instance()->running = next;
     RISCV::w_sepc(next->sepc);
 
