@@ -1,8 +1,8 @@
 #pragma once
 #include "../../lib/hw.h"
-#include "__Console.hpp"
+#include "ConsoleManager.hpp"
 
-void print_string(const char *str);
+void print(const char *str);
 
 #define DIGIT_COUNT 30
 template <typename NUM>
@@ -10,7 +10,7 @@ void print_num(NUM x)
 {
     if (x == 0)
     {
-        __Console::instance()->putc('0');
+        ConsoleManager::instance()->putc('0');
         return;
     }
 
@@ -37,8 +37,11 @@ void print_num(NUM x)
         idx -= 1;
     }
 
-    print_string(&digits[idx + 1]);
+    print(&digits[idx + 1]);
 }
+
+// vraca slucajan broj is skupa [p,q]
+uint64 random(uint64 p, uint64 q);
 
 void exit();
 void error(const char *msg);

@@ -1,30 +1,41 @@
 #pragma once
 #include "../../lib/hw.h"
+#include "PoolAllocator.hpp"
 
-class __Thread;
+class TCB;
+
+class ThreadListElement
+{
+    POOL_ALLOCATOR
+
+public:
+    ThreadListElement *next;
+    ThreadListElement *prev;
+    TCB *thread;
+
+    ThreadListElement(TCB *thread) : next(nullptr), prev(nullptr), thread(thread) {}
+    ThreadListElement() : next(nullptr), prev(nullptr), thread(nullptr) {}
+
+    static ThreadListElement *create(TCB *thread);
+};
 
 class ThreadList
 {
 public:
-    __Thread *head = nullptr;
-    __Thread *tail = nullptr;
-    uint64 thread_count = 0;
+    ThreadListElement sentinel;
 
-    __Thread *get();
-    virtual void put(__Thread *thread);
+    ThreadList()
+    {
+        sentinel.next = &sentinel;
+        sentinel.prev = &sentinel;
+    }
+
+    TCB *get();
+    virtual void put(TCB *thread);
 
     bool empty();
-    void remove_thread(__Thread *thread);
-};
+    void remove_thread(TCB *thread);
 
-class SleepingThreadList : public ThreadList
-{
-public:
-    void put(__Thread *thread) override;
-    virtual void update_ticks();
-};
-
-class TimedwaitThreadList : public SleepingThreadList {
-public:
-    void update_ticks() override;
+private:
+    void remove_element(ThreadListElement *target);
 };

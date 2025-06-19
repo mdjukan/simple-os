@@ -1,11 +1,12 @@
 #include "../../lib/hw.h"
-#include "../../h/kernel/__Console.hpp"
+#include "../../h/kernel/ConsoleManager.hpp"
+#include "../../h/kernel/TCB.hpp"
 
-void print_string(const char *str)
+void print(const char *str)
 {
     while (*str != '\0')
     {
-        __Console::instance()->putc(*str);
+        ConsoleManager::instance()->putc(*str);
         str += 1;
     }
 }
@@ -19,8 +20,18 @@ void exit()
 
 void error(const char *msg)
 {
-    print_string("[ERROR]");
-    print_string(msg);
-    print_string("\n");
+    print("[ERROR]");
+    print(msg);
+    print("\n");
+    ConsoleManager::instance()->flush_out_buffer();
     exit();
+}
+
+uint64 random(uint64 p, uint64 q)
+{
+    static long seed = 9551615UL;
+
+    seed = seed * 1103515245 + 12345;
+
+    return p + seed % (q - p + 1);
 }

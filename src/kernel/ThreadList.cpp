@@ -1,158 +1,84 @@
 #include "../../h/kernel/ThreadList.hpp"
-#include "../../h/kernel/__Thread.hpp"
+#include "../../h/kernel/TCB.hpp"
+#include "../../h/kernel/Utils.hpp"
 
-__Thread *ThreadList::get()
+PoolAllocator *ThreadListElement::allocator = nullptr;
+
+ThreadListElement *ThreadListElement::create(TCB *thread)
 {
-    if (head == nullptr)
+    if (allocator->full())
     {
-        return nullptr;
-    }
-
-    __Thread *thread = head;
-    if (head == tail)
-    {
-        head = nullptr;
-        tail = nullptr;
+        // ovo ne treba da se desava
+        error("ThreadListElement::create allocation failed");
+        return nullptr; // unreachable, ali se kompajer zali
     }
     else
     {
-        head = thread->next;
-        thread->next = nullptr;
+        return new ThreadListElement(thread);
     }
-
-    thread_count -= 1;
-    return thread;
-}
-
-void ThreadList::put(__Thread *thread)
-{
-    if (head == nullptr)
-    {
-        head = thread;
-        tail = thread;
-    }
-    else
-    {
-        tail->next = thread;
-        tail = thread;
-    }
-
-    thread_count += 1;
 }
 
 bool ThreadList::empty()
 {
-    return thread_count == 0;
+    return sentinel.next == &sentinel;
 }
 
-void ThreadList::remove_thread(__Thread *thread)
+TCB *ThreadList::get()
 {
-    __Thread *previous = nullptr;
-    __Thread *current = head;
-
-    while (current != nullptr && current != thread)
+    if (empty())
     {
-        previous = current;
+        error("ThreadList::get on empty list");
+    }
+
+    ThreadListElement *target = sentinel.next;
+    TCB *thread = target->thread;
+    remove_element(target);
+
+    return thread;
+}
+
+void ThreadList::put(TCB *thread)
+{
+    ThreadListElement *element = ThreadListElement::create(thread);
+
+    if (element == nullptr)
+    {
+        error("ThreadListElement::create failed");
+    }
+
+    // dodaje nit na kraj liste
+
+    element->next = &sentinel;
+    element->prev = sentinel.prev;
+
+    sentinel.prev->next = element;
+    sentinel.prev = element;
+}
+
+void ThreadList::remove_thread(TCB *thread)
+{
+    ThreadListElement *current = sentinel.next;
+
+    while (current != &sentinel && current->thread != thread)
+    {
         current = current->next;
     }
 
-    if (current == nullptr)
+    if (current == &sentinel)
     {
-        error("remove_thread not found\n");
+        error("ThreadList::remove_thread thread not in list");
     }
 
-    if (head == thread && tail == thread)
-    {
-        head = nullptr;
-        tail = nullptr;
-    }
-    else if (head == thread)
-    {
-        head = head->next;
-    }
-    else if (tail == thread)
-    {
-        previous->next = nullptr;
-        tail = previous;
-    }
-    else
-    {
-        previous->next = thread->next;
-    }
-
-    thread->next = nullptr;
-    thread_count -= 1;
+    remove_element(current);
 }
 
-void SleepingThreadList::put(__Thread *thread)
+void ThreadList::remove_element(ThreadListElement *target)
 {
-    if (head == nullptr)
-    {
-        head = thread;
-        tail = thread;
-    }
-    else
-    {
-        __Thread *previous = nullptr;
-        __Thread *current = head;
+    ThreadListElement *before = target->prev;
+    ThreadListElement *after = target->next;
 
-        while (current != nullptr && current->sleep_ticks < thread->sleep_ticks)
-        {
-            previous = current;
-            current = current->next;
-        }
+    before->next = after;
+    after->prev = before;
 
-        if (previous == nullptr)
-        {
-            thread->next = head;
-            head = thread;
-        }
-        else if (current == nullptr)
-        {
-            tail->next = thread;
-            tail = thread;
-        }
-        else
-        {
-            previous->next = thread;
-            thread->next = current;
-        }
-    }
-
-    thread_count += 1;
-}
-
-void SleepingThreadList::update_ticks()
-{
-    __Thread *current = head;
-    while (current != nullptr)
-    {
-        current->sleep_ticks -= 1;
-        current = current->next;
-    }
-
-    while (head != nullptr && head->sleep_ticks == 0)
-    {
-        __Thread *thread = get();
-        thread->suspended = false;
-        Scheduler::instance()->put(thread);
-    }
-}
-
-void TimedwaitThreadList::update_ticks() {
-    __Thread *current = head;
-    while (current != nullptr)
-    {
-        current->sleep_ticks -= 1;
-        current = current->next;
-    }
-
-    while (head != nullptr && head->sleep_ticks == 0)
-    {
-        __Thread *thread = get();
-        thread->suspended = false;
-        thread->blocked_on->remove_blocked(thread);
-        thread->wait_failed = true;
-        Scheduler::instance()->put(thread);
-    }
+    delete target;
 }

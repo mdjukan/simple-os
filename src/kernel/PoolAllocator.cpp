@@ -72,3 +72,23 @@ bool PoolAllocator::full()
 {
     return free_count == 0;
 }
+
+#include "../../h/kernel/TCB.hpp"
+#include "../../h/kernel/ThreadList.hpp"
+#include "../../h/kernel/SCB.hpp"
+
+void PoolAllocator::init_allocators()
+{
+    ThreadListElement::allocator = new PoolAllocator(sizeof(ThreadListElement), THREAD_LIST_ELEMENT_COUNT);
+    KernelThread::allocator = new PoolAllocator(sizeof(KernelThread), KERNEL_THREAD_COUNT);
+    UserThread::allocator = new PoolAllocator(sizeof(UserThread), USER_THREAD_COUNT);
+    SCB::allocator = new PoolAllocator(sizeof(SCB), SEMAPHORE_COUNT);
+}
+
+void PoolAllocator::realse_allocators()
+{
+    delete ThreadListElement::allocator;
+    delete KernelThread::allocator;
+    delete UserThread::allocator;
+    delete SCB::allocator;
+}

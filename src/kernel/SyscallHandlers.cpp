@@ -1,24 +1,28 @@
 #include "../../h/kernel/SyscallHandlers.hpp"
 #include "../../h/kernel/Scheduler.hpp"
-#include "../../h/kernel/__Thread.hpp"
-#include "../../h/kernel/__Semaphore.hpp"
-#include "../../h/kernel/Timer.hpp"
-#include "../../h/kernel/__Console.hpp"
+#include "../../h/kernel/TCB.hpp"
+#include "../../h/kernel/SCB.hpp"
+#include "../../h/kernel/TimerManager.hpp"
+#include "../../h/kernel/ConsoleManager.hpp"
 
 syscall_handler_t SyscallHandlers::handlers[SYS_COUNT];
 
 void SyscallHandlers::mem_alloc()
 {
-    uint64 size_in_blocks = Scheduler::instance()->running->read_user_a1();
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    uint64 size_in_blocks = running->read_user_a1();
     void *p = MemoryAllocator::instance()->allocate(size_in_blocks);
-    Scheduler::instance()->running->write_user_a0((uint64)p);
+    running->write_user_a0((uint64)p);
 }
 
 void SyscallHandlers::mem_free()
 {
-    void *p = (void *)Scheduler::instance()->running->read_user_a1();
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    void *p = (void *)running->read_user_a1();
     int ret = MemoryAllocator::instance()->free(p);
-    Scheduler::instance()->running->write_user_a0(ret);
+    running->write_user_a0(ret);
 }
 
 #define SUCCESS 0
@@ -26,27 +30,35 @@ void SyscallHandlers::mem_free()
 
 void SyscallHandlers::thread_create()
 {
-    __Thread **handle = (__Thread **)Scheduler::instance()->running->read_user_a1();
-    body_t body = (body_t)Scheduler::instance()->running->read_user_a2();
-    void *arg = (void *)Scheduler::instance()->running->read_user_a3();
-    void *user_stack_top = (void *)Scheduler::instance()->running->read_user_a4();
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
 
-    *handle = __Thread::create(body, arg, user_stack_top);
+    UserThread **handle = (UserThread **)running->read_user_a1();
+
+    UserThreadConfig config;
+
+    config.user_task = (UserTask)running->read_user_a2();
+    config.user_task_arg = (void *)running->read_user_a3();
+    config.user_stack = (void *)running->read_user_a4();
+    config.user_stack_size = running->read_user_a5();
+
+    *handle = UserThread::create(config);
     if (handle == nullptr)
     {
-        Scheduler::instance()->running->write_user_a0((uint64)-1);
+        running->write_user_a0((uint64)ERROR_BAD_ALLOC);
     }
     else
     {
-        (*handle)->make_ready();
-        Scheduler::instance()->running->write_user_a0((uint64)0);
+        (*handle)->activate();
+        running->write_user_a0((uint64)SUCCESS);
     }
 }
 
-//no return
+// no return
 void SyscallHandlers::thread_exit()
 {
-    Scheduler::instance()->running->done = true;
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    running->done = true;
     yield();
 }
 
@@ -59,17 +71,19 @@ void SyscallHandlers::thread_dispatch()
 #define ERROR_BAD_ALLOC -1
 void SyscallHandlers::sem_open()
 {
-    __Semaphore **handle = (__Semaphore **)Scheduler::instance()->running->read_user_a1();
-    unsigned val = (unsigned)Scheduler::instance()->running->read_user_a2();
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
 
-    *handle = __Semaphore::create(val);
+    SCB **handle = (SCB **)running->read_user_a1();
+    unsigned val = (unsigned)running->read_user_a2();
+
+    *handle = SCB::create(val);
     if (*handle == nullptr)
     {
-        Scheduler::instance()->running->write_user_a0((uint64)ERROR_BAD_ALLOC);
+        running->write_user_a0((uint64)ERROR_BAD_ALLOC);
     }
     else
     {
-        Scheduler::instance()->running->write_user_a0((uint64)SUCCESS);
+        running->write_user_a0((uint64)SUCCESS);
     }
 }
 
@@ -77,16 +91,18 @@ void SyscallHandlers::sem_open()
 #define ERROR_BAD_HANDLE -1
 void SyscallHandlers::sem_close()
 {
-    __Semaphore *handle = (__Semaphore *)Scheduler::instance()->running->read_user_a1();
-    if (__Semaphore::allocator->valid_ptr(handle))
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    SCB *handle = (SCB *)running->read_user_a1();
+    if (SCB::allocator->valid_ptr(handle))
     {
         handle->close();
         delete handle;
-        Scheduler::instance()->running->write_user_a0((uint64)SUCCESS);
+        running->write_user_a0((uint64)SUCCESS);
     }
     else
     {
-        Scheduler::instance()->running->write_user_a0((uint64)ERROR_BAD_HANDLE);
+        running->write_user_a0((uint64)ERROR_BAD_HANDLE);
     }
 }
 
@@ -96,15 +112,17 @@ void SyscallHandlers::sem_close()
 
 void SyscallHandlers::sem_wait()
 {
-    __Semaphore *handle = (__Semaphore *)Scheduler::instance()->running->read_user_a1();
-    if (__Semaphore::allocator->valid_ptr(handle))
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    SCB *handle = (SCB *)running->read_user_a1();
+    if (SCB::allocator->valid_ptr(handle))
     {
         int ret = handle->wait();
-        Scheduler::instance()->running->write_user_a0((uint64)ret);
+        running->write_user_a0((uint64)ret);
     }
     else
     {
-        Scheduler::instance()->running->write_user_a0((uint64)ERROR_BAD_HANDLE);
+        running->write_user_a0((uint64)ERROR_BAD_HANDLE);
     }
 }
 
@@ -112,64 +130,76 @@ void SyscallHandlers::sem_wait()
 #define ERROR_BAD_HANDLE -1
 void SyscallHandlers::sem_signal()
 {
-    __Semaphore *handle = (__Semaphore *)Scheduler::instance()->running->read_user_a1();
-    if (__Semaphore::allocator->valid_ptr(handle))
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    SCB *handle = (SCB *)running->read_user_a1();
+    if (SCB::allocator->valid_ptr(handle))
     {
         handle->signal();
-        Scheduler::instance()->running->write_user_a0((uint64)SUCCESS);
+        running->write_user_a0((uint64)SUCCESS);
     }
     else
     {
-        Scheduler::instance()->running->write_user_a0((uint64)ERROR_BAD_HANDLE);
+        running->write_user_a0((uint64)ERROR_BAD_HANDLE);
     }
 }
 
 void SyscallHandlers::sem_timedwait()
 {
-    __Semaphore *handle = (__Semaphore *)Scheduler::instance()->running->read_user_a1();
-    time_t time = (time_t)Scheduler::instance()->running->read_user_a2();
-    if (__Semaphore::allocator->valid_ptr(handle))
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    SCB *handle = (SCB *)running->read_user_a1();
+    time_t time = (time_t)running->read_user_a2();
+    if (SCB::allocator->valid_ptr(handle))
     {
         int ret = handle->timedwait(time);
-        Scheduler::instance()->running->write_user_a0((uint64)ret);
+        running->write_user_a0((uint64)ret);
     }
     else
     {
-        Scheduler::instance()->running->write_user_a0((uint64)ERROR_BAD_HANDLE);
+        running->write_user_a0((uint64)ERROR_BAD_HANDLE);
     }
 }
 
 void SyscallHandlers::sem_trywait()
 {
-    __Semaphore *handle = (__Semaphore *)Scheduler::instance()->running->read_user_a1();
-    if (__Semaphore::allocator->valid_ptr(handle))
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    SCB *handle = (SCB *)running->read_user_a1();
+    if (SCB::allocator->valid_ptr(handle))
     {
         int ret = handle->try_wait();
-        Scheduler::instance()->running->write_user_a0((uint64)ret);
+        running->write_user_a0((uint64)ret);
     }
     else
     {
-        Scheduler::instance()->running->write_user_a0((uint64)ERROR_BAD_HANDLE);
+        running->write_user_a0((uint64)ERROR_BAD_HANDLE);
     }
 }
 
 void SyscallHandlers::time_sleep()
 {
-    time_t time = (time_t)Scheduler::instance()->running->read_user_a1();
-    Timer::instance()->put_to_sleep(time);
-    Scheduler::instance()->running->write_user_a0((uint64)SUCCESS);
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    time_t time = (time_t)running->read_user_a1();
+    TimerManager::instance()->put_to_sleep(time);
+    running->write_user_a0((uint64)SUCCESS);
 }
 
 void SyscallHandlers::getc()
 {
-    char c = __Console::instance()->getc();
-    Scheduler::instance()->running->write_user_a0((uint64)c);
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    char c = ConsoleManager::instance()->getc();
+    running->write_user_a0((uint64)c);
 }
 
 void SyscallHandlers::putc()
 {
-    char c = (char)Scheduler::instance()->running->read_user_a1();
-    __Console::instance()->putc(c);
+    UserThread *running = (UserThread *)Scheduler::instance()->running;
+
+    char c = (char)running->read_user_a1();
+    ConsoleManager::instance()->putc(c);
 }
 
 void SyscallHandlers::init_handlers()

@@ -4,7 +4,7 @@
 class Thread
 {
 public:
-    Thread(body_t body, void *arg);
+    Thread(UserTask body, void *arg);
     virtual ~Thread();
 
     int start();
@@ -18,7 +18,7 @@ protected:
 
 private:
     thread_t handle;
-    body_t body;
+    UserTask body;
     void *arg;
 
 public:

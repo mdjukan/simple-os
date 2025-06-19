@@ -1,11 +1,11 @@
-#include "../../h/kernel/__Semaphore.hpp"
+#include "../../h/kernel/SCB.hpp"
 #include "../../h/kernel/Scheduler.hpp"
-#include "../../h/kernel/__Thread.hpp"
-#include "../../h/kernel/Timer.hpp"
+#include "../../h/kernel/TCB.hpp"
+#include "../../h/kernel/TimerManager.hpp"
 
-PoolAllocator *__Semaphore::allocator = nullptr;
+PoolAllocator *SCB::allocator = nullptr;
 
-__Semaphore *__Semaphore::create(int val)
+SCB *SCB::create(int val)
 {
     if (allocator->full())
     {
@@ -13,11 +13,11 @@ __Semaphore *__Semaphore::create(int val)
     }
     else
     {
-        return new __Semaphore(val);
+        return new SCB(val);
     }
 }
 
-void __Semaphore::signal()
+void SCB::signal()
 {
     if (blocked.empty())
     {
@@ -25,12 +25,12 @@ void __Semaphore::signal()
     }
     else
     {
-        __Thread *thread = blocked.get();
+        TCB *thread = blocked.get();
         thread->suspended = false;
         thread->wait_failed = false;
         if (thread->timed_wait)
         {
-            Timer::instance()->remove_timedwait(thread);
+            TimerManager::instance()->remove_sleeping(thread);
         }
 
         Scheduler::instance()->put(thread);
@@ -40,7 +40,7 @@ void __Semaphore::signal()
 #define SEM_WAIT_SUCCEEDED 0
 #define SEM_WAIT_FAILED 1
 
-int __Semaphore::wait()
+int SCB::wait()
 {
     if (val > 0)
     {
@@ -48,7 +48,7 @@ int __Semaphore::wait()
     }
     else
     {
-        __Thread *thread = Scheduler::instance()->running;
+        TCB *thread = Scheduler::instance()->running;
         thread->suspended = true;
         blocked.put(thread);
         yield();
@@ -62,7 +62,7 @@ int __Semaphore::wait()
     return SEM_WAIT_SUCCEEDED;
 }
 
-int __Semaphore::try_wait()
+int SCB::try_wait()
 {
     if (val > 0)
     {
@@ -75,14 +75,14 @@ int __Semaphore::try_wait()
     }
 }
 
-void __Semaphore::close()
+void SCB::close()
 {
     while (!blocked.empty())
     {
-        __Thread *thread = blocked.get();
+        TCB *thread = blocked.get();
         if (thread->timed_wait)
         {
-            Timer::instance()->remove_timedwait(thread);
+            TimerManager::instance()->remove_sleeping(thread);
         }
 
         thread->wait_failed = true;
@@ -90,7 +90,7 @@ void __Semaphore::close()
     }
 }
 
-int __Semaphore::timedwait(time_t time)
+int SCB::timedwait(time_t time)
 {
     if (val > 0)
     {
@@ -98,19 +98,18 @@ int __Semaphore::timedwait(time_t time)
     }
     else
     {
-        __Thread *thread = Scheduler::instance()->running;
-        thread->suspended = true;
-        thread->timed_wait = true;
-        thread->blocked_on = this;
-        blocked.put(thread);
-        Timer::instance()->add_timedwait(thread, time);
+        TCB *running = Scheduler::instance()->running;
+        running->suspended = true;
+        running->timed_wait = true;
+        running->blocked_on = this;
+        blocked.put(running);
 
-        yield();
+        TimerManager::instance()->put_to_sleep(time);
 
-        thread->blocked_on = nullptr;
-        thread->timed_wait = false;
+        running->blocked_on = nullptr;
+        running->timed_wait = false;
 
-        if (thread->wait_failed)
+        if (running->wait_failed)
         {
             return SEM_WAIT_FAILED;
         }
@@ -119,7 +118,7 @@ int __Semaphore::timedwait(time_t time)
     return SEM_WAIT_SUCCEEDED;
 }
 
-void __Semaphore::remove_blocked(__Thread *thread)
+void SCB::remove_blocked(TCB *thread)
 {
     blocked.remove_thread(thread);
 }

@@ -168,7 +168,7 @@ void MemoryAllocator::print_map()
     for (uint64 i = 0; i < 80; i++)
     {
         print_num(map[262095 + i]);
-        print_string(" ");
+        print(" ");
     }
-    print_string("\n");
+    print("\n");
 }

@@ -2,7 +2,7 @@
 #include "../../lib/hw.h"
 #include "ThreadList.hpp"
 
-class __Thread;
+class TCB;
 
 extern "C" uint64 sched(uint64 old_sp);
 
@@ -19,13 +19,13 @@ private:
     ThreadList ready;
 
 public:
-    uint64 active_threads = 0;
+    uint64 active_user_threads = 0;
 
-    __Thread *idle_thread = nullptr;
-    __Thread *main_thread = nullptr;
-    __Thread *running = nullptr;
+    TCB *idle_thread = nullptr;
+    TCB *main_thread = nullptr;
+    TCB *running = nullptr;
 
-    void add_new_thread(__Thread *thread);
-    void put(__Thread *thread);
-    __Thread *get();
+    void add_new_thread(TCB *thread);
+    void put(TCB *thread);
+    TCB *get();
 };

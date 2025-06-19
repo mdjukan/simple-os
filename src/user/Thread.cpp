@@ -1,7 +1,7 @@
 #include "../../h/syscall_cpp.hpp"
 #include "../../h/syscall_c.h"
 
-Thread::Thread(body_t body, void *arg)
+Thread::Thread(UserTask body, void *arg)
     : body(body), arg(arg) {}
 
 Thread::~Thread() {}

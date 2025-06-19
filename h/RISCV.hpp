@@ -111,5 +111,5 @@ namespace RISCV
         __asm__ volatile("mv a4, %0" : : "r"(a4));
     }
 
-    uint64 make_syscall(uint64 code, uint64 arg1 = 0, uint64 arg2 = 0, uint64 arg3 = 0, uint64 arg4 = 0);
+    uint64 make_syscall(uint64 code, uint64 arg1 = 0, uint64 arg2 = 0, uint64 arg3 = 0, uint64 arg4 = 0, uint64 arg5 = 0);
 };
